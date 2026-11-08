@@ -43,6 +43,20 @@
       "effect": "3 FIRE Wyrm monsters\nIf this card is Fusion Summoned: You can activate this effect; for the rest of this turn, destroy all other monsters whose ATK is different from its original ATK. Once per turn (Quick Effect): You can pay any number of LP in multiples of 100; this card's ATK becomes equal to the amount paid, also you can make all other monsters currently on the field lose ATK/DEF equal to this card's current ATK.",
       "image": "images/blaze-end-dragon.jpg",
       "added": "2026-11-08"
+    },
+    {
+      "name": "Adorahorror Odogar",
+      "id": "adorahorror-odogar",
+      "type": "Monster",
+      "subtype": "Effect",
+      "attribute": "DARK",
+      "race": "Fairy",
+      "level": 3,
+      "atk": 1200,
+      "def": 1200,
+      "effect": "During the Main Phase (Quick Effect): You can increase or reduce the Level of a monster on the field by 2; Special Summon this card from your hand. If this card is Normal or Special Summoned: You can Special Summon 1 Level 9 or higher DARK Tuner from your hand or GY. If this card is sent to the GY as Synchro Material: You can add 1 \"Adorahorror\" card from your Deck to your hand, except \"Adorahorror Odogar\", then if you control 2 or more Synchro Monsters, you can add 1 second such card. You can only use each effect of \"Adorahorror Odogar\" once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/5800000/5860594.jpg",
+      "added": "2026-11-08"
     }
   ]
 }
