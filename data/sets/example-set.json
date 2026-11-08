@@ -1,0 +1,33 @@
+{
+  "cards": [
+    {
+      "id": "example-silent-knight",
+      "name": "Example Silent Knight",
+      "type": "Monster",
+      "subtype": "Effect",
+      "attribute": "DARK",
+      "race": "Warrior",
+      "level": 4,
+      "atk": 1800,
+      "def": 1200,
+      "archetype": "Example",
+      "effect": "If this card is Normal or Special Summoned: You can add 1 \"Example\" Spell/Trap from your Deck to your hand. You can only use this effect of \"Example Silent Knight\" once per turn.",
+      "image": "images/example-silent-knight.jpg",
+      "status": "Implemented",
+      "creator": "",
+      "added": "2026-11-08"
+    },
+    {
+      "id": "example-rewind",
+      "name": "Example Rewind",
+      "type": "Spell",
+      "subtype": "Quick-Play",
+      "archetype": "Example",
+      "effect": "Target 1 \"Example\" monster in your GY; Special Summon it.",
+      "image": "images/example-rewind.jpg",
+      "status": "WIP",
+      "creator": "",
+      "added": "2026-11-08"
+    }
+  ]
+}
