@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Card Database</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Custom Card Database</h1>
+    <nav>
+      <a href="./" class="active">Cards</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="filters">
+      <input id="q" type="search" placeholder="Search name, effect, archetype…">
+      <select id="fType"><option value="">All types</option></select>
+      <select id="fAttr"><option value="">All attributes</option></select>
+      <select id="fArch"><option value="">All archetypes</option></select>
+      <select id="fSet"><option value="">All sets</option></select>
+      <select id="fStatus"><option value="">Any status</option></select>
+      <select id="sort">
+        <option value="name">Sort: Name</option>
+        <option value="newest">Sort: Newest</option>
+        <option value="atk">Sort: ATK</option>
+        <option value="level">Sort: Level</option>
+      </select>
+    </section>
+
+    <p id="count" class="muted"></p>
+    <section id="grid" class="grid"></section>
+  </main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box">
+      <button id="close" class="close" aria-label="Close">&times;</button>
+      <div id="detail"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

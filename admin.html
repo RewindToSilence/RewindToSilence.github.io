@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Admin – Custom Card Database</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Card Admin</h1>
+    <nav><a href="./">Cards</a><a href="admin.html" class="active">Admin</a></nav>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>1. Connect to your GitHub repo</h2>
+      <div class="form">
+        <label>Owner (GitHub username)<input id="owner" placeholder="yourname"></label>
+        <label>Repository<input id="repo" placeholder="my-card-site"></label>
+        <label>Branch<input id="branch" value="main"></label>
+        <label>Access token<input id="token" type="password" placeholder="github_pat_…" autocomplete="off"></label>
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="remember"> Remember on this device</label>
+        <button id="connect">Connect &amp; load cards</button>
+        <button id="forget" class="secondary">Forget token</button>
+      </div>
+      <div id="connStatus" class="status"></div>
+    </section>
+
+    <section class="panel" id="editor" style="display:none">
+      <h2 id="editorTitle">2. Add a card</h2>
+      <div class="form">
+        <label>Set *
+          <select id="setSel"></select>
+        </label>
+        <label id="newSetWrap" style="display:none">New set name *<input id="newSet" placeholder="e.g. Rewind Pack 1"></label>
+        <label>Name *<input id="name"></label>
+        <label>Card ID (auto)<input id="id" placeholder="auto from name"></label>
+        <label>Type *
+          <select id="type"><option>Monster</option><option>Spell</option><option>Trap</option></select>
+        </label>
+        <label>Subtype (Effect, Quick-Play, Continuous…)<input id="subtype"></label>
+        <label>Attribute<input id="attribute" placeholder="DARK, LIGHT…"></label>
+        <label>Monster type<input id="race" placeholder="Warrior, Spellcaster…"></label>
+        <label>Level / Rank / Link<input id="level" type="number" min="0"></label>
+        <label>ATK<input id="atk" placeholder="1800 or ?"></label>
+        <label>DEF<input id="def" placeholder="1200 or ?"></label>
+        <label>Pendulum scale<input id="scale" type="number" min="0"></label>
+        <label>Archetype<input id="archetype"></label>
+        <label>Status<input id="status" list="statuses" placeholder="Implemented, WIP…"></label>
+        <datalist id="statuses"><option>Implemented</option><option>WIP</option><option>Planned</option></datalist>
+        <label>Creator<input id="creator"></label>
+        <label class="wide">Effect text<textarea id="effect" rows="5"></textarea></label>
+        <label class="wide">Image URL (e.g. a DuelingBook image link, hotlinked, nothing stored in the repo)
+          <input id="image" placeholder="https://… or images/your-card.jpg">
+        </label>
+        <label class="wide">…or upload an image instead (auto-resized to JPEG, stored in repo)
+          <input id="imageFile" type="file" accept="image/*">
+        </label>
+        <div class="wide"><img id="imgPreview" class="preview" alt="" style="display:none"></div>
+      </div>
+      <div class="row">
+        <button id="save">Save card to repo</button>
+        <button id="clear" class="secondary">Clear form</button>
+        <button id="delete" class="danger" style="display:none">Delete this card</button>
+      </div>
+      <div id="saveStatus" class="status"></div>
+    </section>
+
+    <section class="panel" id="listPanel" style="display:none">
+      <h2>Existing cards <span class="muted" id="listCount"></span></h2>
+      <input id="listSearch" type="search" placeholder="Filter…" style="width:100%;margin-bottom:10px">
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const FIELDS = ['name','id','type','subtype','attribute','race','level','atk','def','scale','archetype','status','creator','effect','image'];
+  const NUMERIC = ['level','scale'];
+  const NEW_SET = '__new__';
+  let sets = [];          // [{id,name,file}]
+  let cards = [];         // all cards, each with _set (set id) attached in memory only
+  let editingId = null;
+  let editingSet = null;
+  let imageB64 = null;    // base64 of resized jpeg, or null
+
+  // ---------- helpers ----------
+  const slug = (s) => s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g,'').trim().replace(/[\s_]+/g,'-').replace(/-+/g,'-');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  function say(el, msg, kind) { el.textContent = msg; el.className = 'status show ' + (kind || ''); }
+  function utf8ToB64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function b64ToUtf8(b64) {
+    const bin = atob(b64.replace(/\s/g, ''));
+    return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+  }
+  const toJson = (o) => JSON.stringify(o, null, 2) + '\n';
+  const setFile = (id) => { const s = sets.find((x) => x.id === id); return (s && s.file) || `data/sets/${id}.json`; };
+
+  // ---------- config ----------
+  function cfg() {
+    return { owner: $('owner').value.trim(), repo: $('repo').value.trim(), branch: $('branch').value.trim() || 'main', token: $('token').value.trim() };
+  }
+  function restore() {
+    try {
+      const s = JSON.parse(localStorage.getItem('cardAdminCfg') || 'null');
+      if (s) { for (const k of ['owner','repo','branch','token']) if (s[k]) $(k).value = s[k]; $('remember').checked = true; }
+    } catch (_) {}
+    const m = location.hostname.match(/^(.+)\.github\.io$/);
+    if (m && !$('owner').value) $('owner').value = m[1];
+    const p = location.pathname.split('/').filter(Boolean)[0];
+    if (m && !$('repo').value) $('repo').value = (p && !p.endsWith('.html')) ? p : m[1] + '.github.io';
+  }
+  function persist() {
+    try {
+      if ($('remember').checked) localStorage.setItem('cardAdminCfg', JSON.stringify(cfg()));
+      else localStorage.removeItem('cardAdminCfg');
+    } catch (_) {}
+  }
+  $('forget').onclick = () => { localStorage.removeItem('cardAdminCfg'); $('token').value = ''; $('remember').checked = false; say($('connStatus'), 'Token forgotten on this device.', 'good'); };
+
+  // ---------- GitHub API ----------
+  async function gh(method, path, body) {
+    const c = cfg();
+    const url = `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}` + (method === 'GET' ? `?ref=${encodeURIComponent(c.branch)}&t=${Date.now()}` : '');
+    const r = await fetch(url, {
+      method,
+      headers: { Authorization: 'Bearer ' + c.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      body: body ? JSON.stringify({ ...body, branch: c.branch }) : undefined,
+    });
+    if (r.status === 404 && method === 'GET') return null;
+    if (!r.ok) {
+      let m = ''; try { m = (await r.json()).message; } catch (_) {}
+      if (r.status === 401) m = 'Bad token. ' + m;
+      if (r.status === 403 || r.status === 404) m += ' (check the token has Contents: read & write on this repo)';
+      throw new Error(`GitHub ${r.status}: ${m}`);
+    }
+    return r.json();
+  }
+
+  // returns {sha, data} for a JSON file, or {sha:null, data:fallback} if missing
+  async function readJson(path, fallback) {
+    const f = await gh('GET', path);
+    if (!f) return { sha: null, data: fallback };
+    if (!f.content) throw new Error(`${path} is too large for the contents API (>1MB). Split this set into two sets.`);
+    return { sha: f.sha, data: JSON.parse(b64ToUtf8(f.content)) };
+  }
+  const normCards = (d) => (Array.isArray(d) ? d : d.cards || []);
+
+  async function loadAll() {
+    const { data } = await readJson('data/index.json', { sets: [] });
+    sets = data.sets || [];
+    const parts = await Promise.all(sets.map(async (s) => {
+      const { data: d } = await readJson(s.file || setFile(s.id), { cards: [] });
+      return normCards(d).map((c) => ({ ...c, _set: s.id }));
+    }));
+    cards = parts.flat();
+  }
+
+  async function connect() {
+    persist();
+    const c = cfg();
+    if (!c.owner || !c.repo || !c.token) return say($('connStatus'), 'Fill owner, repo and token.', 'err');
+    say($('connStatus'), 'Connecting…');
+    try {
+      await loadAll();
+      say($('connStatus'), `Connected. ${cards.length} cards in ${sets.length} set(s) at ${c.owner}/${c.repo}.`, 'good');
+      $('editor').style.display = ''; $('listPanel').style.display = '';
+      renderSets(); renderList();
+    } catch (e) { say($('connStatus'), e.message, 'err'); }
+  }
+  $('connect').onclick = connect;
+
+  // ---------- sets ----------
+  function renderSets(selected) {
+    const opts = sets.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+    $('setSel').innerHTML = opts + `<option value="${NEW_SET}">➕ New set…</option>`;
+    $('setSel').value = selected || (sets[0] ? sets[0].id : NEW_SET);
+    toggleNewSet();
+  }
+  function toggleNewSet() { $('newSetWrap').style.display = $('setSel').value === NEW_SET ? '' : 'none'; }
+  $('setSel').onchange = toggleNewSet;
+
+  // ---------- list ----------
+  const setName = (id) => (sets.find((s) => s.id === id) || {}).name || id;
+  function renderList() {
+    const q = $('listSearch').value.toLowerCase();
+    const items = cards.filter((c) => !q || c.name.toLowerCase().includes(q) || setName(c._set).toLowerCase().includes(q)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 500);
+    $('listCount').textContent = `(${cards.length})`;
+    $('list').innerHTML = items.map((c) => `<div class="item" data-id="${esc(c.id)}"><span>${esc(c.name)}</span><span class="muted">${esc(setName(c._set))}</span></div>`).join('') || '<div class="item muted">No cards</div>';
+  }
+  $('listSearch').oninput = renderList;
+  $('list').onclick = (e) => { const el = e.target.closest('.item'); if (el && el.dataset.id) edit(el.dataset.id); };
+
+  // ---------- form ----------
+  function clearForm() {
+    FIELDS.forEach((f) => { $(f).value = f === 'type' ? 'Monster' : ''; });
+    $('newSet').value = ''; $('imageFile').value = ''; imageB64 = null; editingId = null; editingSet = null;
+    $('imgPreview').style.display = 'none';
+    $('editorTitle').textContent = '2. Add a card';
+    $('delete').style.display = 'none'; $('id').readOnly = false; $('setSel').disabled = false;
+  }
+  $('clear').onclick = clearForm;
+  function edit(id) {
+    const c = cards.find((x) => x.id === id); if (!c) return;
+    clearForm(); editingId = id; editingSet = c._set;
+    FIELDS.forEach((f) => { $(f).value = c[f] ?? ''; });
+    $('id').readOnly = true;
+    renderSets(c._set); $('setSel').disabled = true; // set is fixed while editing
+    if (c.image) { $('imgPreview').src = c.image; $('imgPreview').style.display = ''; }
+    $('editorTitle').textContent = 'Editing: ' + c.name;
+    $('delete').style.display = '';
+    $('editor').scrollIntoView({ behavior: 'smooth' });
+  }
+  $('name').addEventListener('input', () => { if (!editingId) $('id').value = slug($('name').value); });
+  $('image').addEventListener('input', () => {
+    const u = $('image').value.trim();
+    if (u) { $('imgPreview').src = u; $('imgPreview').style.display = ''; } else $('imgPreview').style.display = 'none';
+  });
+
+  $('imageFile').onchange = async () => {
+    const file = $('imageFile').files[0]; if (!file) { imageB64 = null; return; }
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await img.decode();
+    const max = 600, scale = Math.min(1, max / img.width);
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * scale); cv.height = Math.round(img.height * scale);
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    const url = cv.toDataURL('image/jpeg', 0.88);
+    imageB64 = url.split(',')[1];
+    $('imgPreview').src = url; $('imgPreview').style.display = '';
+  };
+
+  function readCard() {
+    const c = {};
+    FIELDS.forEach((f) => {
+      let v = $(f).value.trim();
+      if (v === '') return;
+      if (NUMERIC.includes(f)) v = Number(v);
+      else if ((f === 'atk' || f === 'def') && /^\d+$/.test(v)) v = Number(v);
+      c[f] = v;
+    });
+    return c;
+  }
+
+  // ---------- save / delete ----------
+  async function putFile(path, contentB64, message) {
+    const existing = await gh('GET', path);
+    return gh('PUT', path, { message, content: contentB64, ...(existing ? { sha: existing.sha } : {}) });
+  }
+
+  $('save').onclick = async () => {
+    const card = readCard();
+    if (!card.name) return say($('saveStatus'), 'Name is required.', 'err');
+    card.id = card.id || slug(card.name);
+    if (!card.id) return say($('saveStatus'), 'Could not make an ID from that name.', 'err');
+
+    // work out the target set
+    let setId = editingSet || $('setSel').value, newSetName = null;
+    if (!editingSet && setId === NEW_SET) {
+      newSetName = $('newSet').value.trim();
+      if (!newSetName) return say($('saveStatus'), 'Enter a name for the new set.', 'err');
+      setId = slug(newSetName);
+      if (!setId) return say($('saveStatus'), 'Set name needs letters or numbers.', 'err');
+      if (sets.some((s) => s.id === setId)) newSetName = null; // already exists, just use it
+    }
+    // IDs are unique across the whole database
+    const dupe = cards.find((x) => x.id === card.id);
+    if (!editingId && dupe) return say($('saveStatus'), `A card with ID "${card.id}" already exists (in ${setName(dupe._set)}). Change the name or ID.`, 'err');
+
+    $('save').disabled = true;
+    try {
+      say($('saveStatus'), 'Saving…');
+      if (imageB64) {
+        card.image = `images/${card.id}.jpg`;
+        await putFile(card.image, imageB64, `Add image for ${card.name}`);
+      }
+      // fresh read of the set file right before writing, so we never clobber newer changes
+      const path = setFile(setId);
+      const { sha, data } = await readJson(path, { cards: [] });
+      const list = normCards(data);
+      const i = list.findIndex((x) => x.id === card.id);
+      if (i >= 0) list[i] = { ...list[i], ...card };
+      else list.push({ ...card, added: new Date().toISOString().slice(0, 10) });
+      await gh('PUT', path, { message: `${i >= 0 ? 'Update' : 'Add'} card: ${card.name}`, content: utf8ToB64(toJson({ cards: list })), ...(sha ? { sha } : {}) });
+
+      // register a brand-new set in the index (after its file exists)
+      if (newSetName) {
+        const idx = await readJson('data/index.json', { sets: [] });
+        idx.data.sets = idx.data.sets || [];
+        if (!idx.data.sets.some((s) => s.id === setId)) idx.data.sets.push({ id: setId, name: newSetName, file: path });
+        await gh('PUT', 'data/index.json', { message: `Add set: ${newSetName}`, content: utf8ToB64(toJson(idx.data)), ...(idx.sha ? { sha: idx.sha } : {}) });
+      }
+      await loadAll(); renderSets(setId); renderList();
+      say($('saveStatus'), `Saved "${card.name}" to ${setName(setId)}. The live site updates in about a minute.`, 'good');
+      clearForm(); renderSets(setId);
+    } catch (e) { say($('saveStatus'), e.message, 'err'); }
+    $('save').disabled = false;
+  };
+
+  $('delete').onclick = async () => {
+    const c = cards.find((x) => x.id === editingId); if (!c) return;
+    if (!confirm(`Delete "${c.name}" permanently?`)) return;
+    try {
+      say($('saveStatus'), 'Deleting…');
+      const path = setFile(c._set);
+      const { sha, data } = await readJson(path, { cards: [] });
+      await gh('PUT', path, { message: `Delete card: ${c.name}`, content: utf8ToB64(toJson({ cards: normCards(data).filter((x) => x.id !== c.id) })), sha });
+      if (c.image && c.image.startsWith('images/')) { const f = await gh('GET', c.image); if (f) await gh('DELETE', c.image, { message: `Delete image for ${c.name}`, sha: f.sha }); }
+      await loadAll(); renderList(); clearForm(); renderSets();
+      say($('saveStatus'), `Deleted "${c.name}".`, 'good');
+    } catch (e) { say($('saveStatus'), e.message, 'err'); }
+  };
+
+  restore();
+})();
+</script>
+</body>
+</html>
