@@ -4,6 +4,11 @@
       "id": "example-set",
       "name": "Example Set",
       "file": "data/sets/example-set.json"
+    },
+    {
+      "id": "fullmetal-inferno",
+      "name": "Fullmetal Inferno",
+      "file": "data/sets/fullmetal-inferno.json"
     }
   ]
 }
