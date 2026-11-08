@@ -30,23 +30,6 @@
       "added": "2026-11-08"
     },
     {
-      "name": "Blaze End Dragon",
-      "id": "blaze-end-dragon",
-      "type": "Monster",
-      "subtype": "Fusion",
-      "attribute": "FIRE",
-      "race": "Wyrm",
-      "level": 8,
-      "atk": 3000,
-      "def": 2000,
-      "archetype": "Inferno Engine, Blaze Driver",
-      "status": "Test",
-      "creator": "KyrieDevles",
-      "effect": "3 FIRE Wyrm monsters\nIf this card is Fusion Summoned: You can activate this effect; for the rest of this turn, destroy all other monsters whose ATK is different from its original ATK. Once per turn (Quick Effect): You can pay any number of LP in multiples of 100; this card's ATK becomes equal to the amount paid, also you can make all other monsters currently on the field lose ATK/DEF equal to this card's current ATK.",
-      "image": "images/blaze-end-dragon.jpg",
-      "added": "2026-11-08"
-    },
-    {
       "name": "Adorahorror Odogar",
       "id": "adorahorror-odogar",
       "type": "Monster",
