@@ -1,0 +1,9 @@
+{
+  "sets": [
+    {
+      "id": "example-set",
+      "name": "Example Set",
+      "file": "data/sets/example-set.json"
+    }
+  ]
+}
