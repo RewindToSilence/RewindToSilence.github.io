@@ -33,6 +33,18 @@
 
     <section class="panel" id="editor" style="display:none">
       <h2 id="editorTitle">2. Add a card</h2>
+      <div class="pastebox">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted)">Paste card text (same format as the Auto Fill extension; separate several cards with a line of =====)
+          <textarea id="pasteText" rows="6" placeholder="Blaze Driver Deuteriel&#10;Level 4 FIRE Wyrm/Effect&#10;ATK/900 DEF/1900&#10;Effect text…"></textarea>
+        </label>
+        <div class="row">
+          <button id="parseBtn" type="button">Fill form from text</button>
+          <button id="prevCard" class="secondary" type="button" style="display:none">◀</button>
+          <span id="batchInfo" class="muted"></span>
+          <button id="nextCard" class="secondary" type="button" style="display:none">▶</button>
+        </div>
+        <div id="parseStatus" class="status"></div>
+      </div>
       <div class="form">
         <label>Set *
           <select id="setSel"></select>
@@ -43,20 +55,27 @@
         <label>Type *
           <select id="type"><option>Monster</option><option>Spell</option><option>Trap</option></select>
         </label>
-        <label>Subtype (Effect, Quick-Play, Continuous…)<input id="subtype"></label>
+        <label>Subtype (Effect, Fusion, Quick-Play…)<input id="subtype"></label>
         <label>Attribute<input id="attribute" placeholder="DARK, LIGHT…"></label>
         <label>Monster type<input id="race" placeholder="Warrior, Spellcaster…"></label>
         <label>Level / Rank / Link<input id="level" type="number" min="0"></label>
         <label>ATK<input id="atk" placeholder="1800 or ?"></label>
         <label>DEF<input id="def" placeholder="1200 or ?"></label>
-        <label>Pendulum scale<input id="scale" type="number" min="0"></label>
+        <label>Pendulum scale (e.g. 1/8)<input id="scale" placeholder="1/8"></label>
+        <label>Ability (Tuner, Flip…)<input id="ability"></label>
+        <label>Link arrows<input id="arrows" placeholder="Top, Bottom-Left"></label>
         <label>Archetype<input id="archetype"></label>
         <label>Status<input id="status" list="statuses" placeholder="Implemented, WIP…"></label>
         <datalist id="statuses"><option>Implemented</option><option>WIP</option><option>Planned</option></datalist>
         <label>Creator<input id="creator"></label>
+        <label class="wide">Pendulum effect<textarea id="pendEffect" rows="3"></textarea></label>
         <label class="wide">Effect text<textarea id="effect" rows="5"></textarea></label>
         <label class="wide">Image URL (e.g. a DuelingBook image link, hotlinked, nothing stored in the repo)
           <input id="image" placeholder="https://… or images/your-card.jpg">
+        </label>
+        <label>Art 2 URL (optional second image)<input id="art2" placeholder="https://…"></label>
+        <label>Full Art
+          <select id="fullArt"><option value="">Off</option><option value="ON">On</option></select>
         </label>
         <label class="wide">…or upload an image instead (auto-resized to JPEG, stored in repo)
           <input id="imageFile" type="file" accept="image/*">
@@ -78,11 +97,12 @@
     </section>
   </main>
 
+<script src="parse.js"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
-  const FIELDS = ['name','id','type','subtype','attribute','race','level','atk','def','scale','archetype','status','creator','effect','image'];
-  const NUMERIC = ['level','scale'];
+  const FIELDS = ['name','id','type','subtype','attribute','race','level','atk','def','scale','ability','arrows','archetype','status','creator','effect','pendEffect','image','art2','fullArt'];
+  const NUMERIC = ['level'];
   const NEW_SET = '__new__';
   let sets = [];          // [{id,name,file}]
   let cards = [];         // all cards, each with _set (set id) attached in memory only
@@ -215,6 +235,7 @@
     const c = cards.find((x) => x.id === id); if (!c) return;
     clearForm(); editingId = id; editingSet = c._set;
     FIELDS.forEach((f) => { $(f).value = c[f] ?? ''; });
+    $('fullArt').value = c.fullArt ? 'ON' : '';
     $('id').readOnly = true;
     renderSets(c._set); $('setSel').disabled = true; // set is fixed while editing
     if (c.image) { $('imgPreview').src = c.image; $('imgPreview').style.display = ''; }
@@ -247,6 +268,7 @@
     FIELDS.forEach((f) => {
       let v = $(f).value.trim();
       if (v === '') return;
+      if (f === 'fullArt') { c.fullArt = true; return; }
       if (NUMERIC.includes(f)) v = Number(v);
       else if ((f === 'atk' || f === 'def') && /^\d+$/.test(v)) v = Number(v);
       c[f] = v;
@@ -291,7 +313,7 @@
       const { sha, data } = await readJson(path, { cards: [] });
       const list = normCards(data);
       const i = list.findIndex((x) => x.id === card.id);
-      if (i >= 0) list[i] = { ...list[i], ...card };
+      if (i >= 0) list[i] = list[i].added ? { ...card, added: list[i].added } : card;
       else list.push({ ...card, added: new Date().toISOString().slice(0, 10) });
       await gh('PUT', path, { message: `${i >= 0 ? 'Update' : 'Add'} card: ${card.name}`, content: utf8ToB64(toJson({ cards: list })), ...(sha ? { sha } : {}) });
 
@@ -305,6 +327,8 @@
       await loadAll(); renderSets(setId); renderList();
       say($('saveStatus'), `Saved "${card.name}" to ${setName(setId)}. The live site updates in about a minute.`, 'good');
       clearForm(); renderSets(setId);
+      if (batch.length > 1 && bi < batch.length - 1) { bi++; parseCurrent(); }
+      else { batch = []; bi = 0; $('pasteText').value = ''; updateBatchInfo(); }
     } catch (e) { say($('saveStatus'), e.message, 'err'); }
     $('save').disabled = false;
   };
@@ -322,6 +346,60 @@
       say($('saveStatus'), `Deleted "${c.name}".`, 'good');
     } catch (e) { say($('saveStatus'), e.message, 'err'); }
   };
+
+  // ---------- paste-to-fill (uses the same parser as the Auto Fill extension) ----------
+  let batch = [], bi = 0;
+  const splitCards = (text) => String(text || '').replace(/\r/g, '').split(/^[ \t]*={3,}[ \t]*$/m).map((t) => t.trim()).filter(Boolean);
+  const titleCase = (a) => a.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('-');
+
+  function updateBatchInfo() {
+    const many = batch.length > 1;
+    $('prevCard').style.display = $('nextCard').style.display = many ? '' : 'none';
+    $('batchInfo').textContent = many ? `Card ${bi + 1} of ${batch.length}: ${window.dbfaParse(batch[bi]).name || '(no name)'}` : '';
+  }
+
+  function applyParsed(p) {
+    const set = (id, v) => { $(id).value = v == null ? '' : String(v); };
+    set('name', p.name);
+    if (!editingId) set('id', slug(p.name || ''));
+    set('type', p.cardType);
+    set('subtype', p.cardType === 'Monster' ? p.category : p.subtype);
+    set('race', p.type);
+    set('attribute', p.attribute);
+    set('level', p.level);
+    set('atk', p.atk);
+    set('def', p.def);
+    set('scale', p.scale ? (p.scale[0] === p.scale[1] ? p.scale[0] : p.scale[0] + '/' + p.scale[1]) : '');
+    set('ability', (p.abilities || (p.ability ? [p.ability] : [])).join(', '));
+    set('arrows', (p.arrows || []).map(titleCase).join(', '));
+    set('effect', p.effect);
+    set('pendEffect', p.pendEffect);
+    // picture lines are optional; only touch the image fields when the text has them
+    if (p.art || p.art2 || p.fullArt !== undefined) {
+      set('image', p.art || p.art2 || '');
+      set('art2', p.art && p.art2 ? p.art2 : '');
+      set('fullArt', p.fullArt ? 'ON' : '');
+      $('image').dispatchEvent(new Event('input'));
+    }
+    const warn = [...(p.notes || [])];
+    if (!p.name) warn.push('No name found');
+    if (p.cardType === 'Monster') {
+      if (!p.attribute) warn.push('No attribute found');
+      if (!p.level) warn.push('No level/rank/link found');
+      if (p.atk === undefined) warn.push('No ATK found');
+    }
+    say($('parseStatus'), warn.length ? 'Filled. Please check: ' + warn.join('; ') : 'Filled from text. Review, then save.', warn.length ? '' : 'good');
+  }
+
+  function parseCurrent() { applyParsed(window.dbfaParse(batch[bi])); updateBatchInfo(); }
+
+  $('parseBtn').onclick = () => {
+    batch = splitCards($('pasteText').value); bi = 0;
+    if (!batch.length) { updateBatchInfo(); return say($('parseStatus'), 'Paste some card text first.', 'err'); }
+    parseCurrent();
+  };
+  $('prevCard').onclick = () => { if (bi > 0) { bi--; parseCurrent(); } };
+  $('nextCard').onclick = () => { if (bi < batch.length - 1) { bi++; parseCurrent(); } };
 
   restore();
 })();

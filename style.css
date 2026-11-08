@@ -86,3 +86,6 @@ button:disabled{opacity:.5;cursor:default}
 .list .item{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer}
 .list .item:hover{background:var(--panel2);box-shadow:inset 3px 0 0 var(--gold)}
 .preview{max-width:140px;border-radius:8px;border:2px solid var(--gold)}
+
+.pastebox{margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed var(--line)}
+.pastebox textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}

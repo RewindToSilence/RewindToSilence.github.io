@@ -89,6 +89,8 @@
       c.atk !== undefined && c.atk !== '' ? 'ATK ' + c.atk : '',
       c.def !== undefined && c.def !== '' ? 'DEF ' + c.def : '',
       c.scale !== undefined && c.scale !== '' ? 'Scale ' + c.scale : '',
+      c.ability,
+      c.arrows ? 'Link arrows: ' + c.arrows : '',
     ].filter(Boolean);
     $('detail').innerHTML = `<div class="detail">
       <div class="img">${c.image ? `<img src="${esc(c.image)}" alt="${esc(c.name)}" onerror="this.replaceWith(document.createTextNode('No image'))">` : 'No image'}</div>
@@ -96,7 +98,7 @@
         <h2>${esc(c.name)}</h2>
         <div class="muted">${esc(c.archetype || '')}</div>
         <div class="stats">${stats.map((s) => `<span class="stat">${esc(s)}</span>`).join('')}</div>
-        <div class="effect">${esc(c.effect || '')}</div>
+        ${c.pendEffect ? `<div class="effect"><strong>Pendulum Effect</strong>\n${esc(c.pendEffect)}</div><div style="height:8px"></div>` : ''}<div class="effect">${esc(c.effect || '')}</div>
         <p class="muted">${[c.setName && 'Set: ' + esc(c.setName), c.status && 'Status: ' + esc(c.status), c.creator && 'By ' + esc(c.creator)].filter(Boolean).join(' · ')}</p>
       </div></div>`;
     $('modal').hidden = false;
