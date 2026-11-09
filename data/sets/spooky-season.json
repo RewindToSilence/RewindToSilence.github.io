@@ -57,6 +57,20 @@
       "effect": "If this card is Normal or Special Summoned: You can add 1 \"Terrorcarnation\" monster from your Deck to your hand, except “Terrorcarnation Necromancer”. If this card is destroyed by a card effect: You can Special Summon 1 “Terrorcarnation Token” (Zombie/DARK/Level 1/ATK 0/DEF 0) in Defense Position, then if you control a “Terrorcarnation” Link monster, you can draw 1 card. You can only use each effect of “Terrorcarnation Necromancer” once per turn.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124755.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Punished",
+      "id": "terrorcarnation-punished",
+      "type": "Monster",
+      "subtype": "Effect",
+      "attribute": "DARK",
+      "race": "Zombie",
+      "level": 3,
+      "atk": 0,
+      "def": 300,
+      "effect": "If this card is Normal or Special Summoned: You can add 1 “Terrorcarnation” Spell/Trap from your Deck to your hand. If this card is destroyed by a card effect: You can Special Summon 1 “Terrorcarnation Token” (Zombie/DARK/Level 1/ATK 0/DEF 0) in Defense Position, then if you control a “Terrorcarnation” Link monster, you can send 1 “Terrorcarnation” card from your Deck to the GY, except “Terrorcarnation Punished”. You can only use each effect of “Terrorcarnation Punished” once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124759.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
