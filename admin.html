@@ -11,7 +11,7 @@
 <body>
   <header class="top">
     <a class="brand" href="./"><img src="logo.jpg" alt="RTS"><h1>Rewind To Silence <span>Card Admin</span></h1></a>
-    <nav><a href="./" class="active">Back to cards</a></nav>
+    <nav><a href="cards.html">Cards</a><a href="sets.html">Sets</a></nav>
   </header>
 
   <main>
@@ -31,8 +31,34 @@
       <div id="connStatus" class="status"></div>
     </section>
 
+    <section class="panel" id="setPanel" style="display:none">
+      <h2>2. Sets</h2>
+      <div class="form">
+        <label class="wide">Set
+          <select id="setEditSel"></select>
+        </label>
+        <label>Set name *<input id="setName" placeholder="e.g. Spooky Season"></label>
+        <label>Set ID (auto)<input id="setId" placeholder="auto from name"></label>
+        <label>Release date (optional)<input id="setDate" type="date"></label>
+        <label class="wide">Description (optional)<textarea id="setDesc" rows="2"></textarea></label>
+        <label class="wide">Cover image URL, or upload one below
+          <input id="setCover" placeholder="https://… or images/sets/your-set.webp">
+        </label>
+        <label class="wide">Upload cover image (any shape, resized to 900px on its longest side, transparency kept)
+          <input id="setCoverFile" type="file" accept="image/*">
+        </label>
+        <div class="wide"><img id="setCoverPreview" class="preview" alt="" style="display:none;max-width:160px"></div>
+      </div>
+      <div class="row">
+        <button id="saveSet">Create set</button>
+        <button id="clearSet" class="secondary">New set</button>
+        <button id="deleteSet" class="danger" style="display:none">Delete set</button>
+      </div>
+      <div id="setStatus" class="status"></div>
+    </section>
+
     <section class="panel" id="editor" style="display:none">
-      <h2 id="editorTitle">2. Add a card</h2>
+      <h2 id="editorTitle">3. Add a card</h2>
       <div class="pastebox">
         <label style="display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted)">Paste card text (same format as the Auto Fill extension; separate several cards with a line of =====)
           <textarea id="pasteText" rows="6" placeholder="Blaze Driver Deuteriel&#10;Level 4 FIRE Wyrm/Effect&#10;ATK/900 DEF/1900&#10;Effect text…"></textarea>
@@ -195,8 +221,8 @@
     try {
       await loadAll();
       say($('connStatus'), `Connected. ${cards.length} cards in ${sets.length} set(s) at ${c.owner}/${c.repo}.`, 'good');
-      $('editor').style.display = ''; $('listPanel').style.display = '';
-      renderSets(); renderList();
+      $('editor').style.display = ''; $('listPanel').style.display = ''; $('setPanel').style.display = '';
+      renderSets(); renderList(); renderSetEditor();
     } catch (e) { say($('connStatus'), e.message, 'err'); }
   }
   $('connect').onclick = connect;
@@ -227,7 +253,7 @@
     FIELDS.forEach((f) => { $(f).value = f === 'type' ? 'Monster' : ''; });
     $('newSet').value = ''; $('imageFile').value = ''; imageB64 = null; editingId = null; editingSet = null;
     $('imgPreview').style.display = 'none';
-    $('editorTitle').textContent = '2. Add a card';
+    $('editorTitle').textContent = '3. Add a card';
     $('delete').style.display = 'none'; $('id').readOnly = false; $('setSel').disabled = false;
   }
   $('clear').onclick = clearForm;
@@ -345,6 +371,113 @@
       await loadAll(); renderList(); clearForm(); renderSets();
       say($('saveStatus'), `Deleted "${c.name}".`, 'good');
     } catch (e) { say($('saveStatus'), e.message, 'err'); }
+  };
+
+  // ---------- set manager (create / edit / delete sets, cover upload) ----------
+  const SETS_DIR = 'images/sets/';
+  let editingSetId = null;
+  let newCover = null; // { b64, ext } for a cover image chosen in this session
+
+  function previewSetCover(src) {
+    const el = $('setCoverPreview');
+    if (src) { el.src = src; el.style.display = ''; } else el.style.display = 'none';
+  }
+  function loadSetIntoForm(id) {
+    const s = sets.find((x) => x.id === id);
+    editingSetId = s ? s.id : null; newCover = null; $('setCoverFile').value = '';
+    $('setName').value = s ? s.name : '';
+    $('setId').value = s ? s.id : ''; $('setId').readOnly = !!s;
+    $('setDate').value = (s && s.date) || '';
+    $('setDesc').value = (s && s.description) || '';
+    $('setCover').value = (s && s.cover) || '';
+    previewSetCover($('setCover').value);
+    $('deleteSet').style.display = s ? '' : 'none';
+    $('saveSet').textContent = s ? 'Save set changes' : 'Create set';
+  }
+  function renderSetEditor(selected) {
+    $('setEditSel').innerHTML = '<option value="">➕ New set…</option>' + sets.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+    $('setEditSel').value = selected && sets.some((s) => s.id === selected) ? selected : '';
+    loadSetIntoForm($('setEditSel').value);
+  }
+  $('setEditSel').onchange = () => loadSetIntoForm($('setEditSel').value);
+  $('clearSet').onclick = () => { $('setEditSel').value = ''; loadSetIntoForm(''); };
+  $('setName').addEventListener('input', () => { if (!editingSetId) $('setId').value = slug($('setName').value); });
+  $('setCover').addEventListener('input', () => { newCover = null; $('setCoverFile').value = ''; previewSetCover($('setCover').value.trim()); });
+
+  // resize to max 900px on the longest side; WebP keeps transparency and stays small (PNG fallback)
+  $('setCoverFile').onchange = async () => {
+    const file = $('setCoverFile').files[0]; if (!file) { newCover = null; return; }
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await img.decode();
+    const scale = Math.min(1, 900 / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * scale); cv.height = Math.round(img.height * scale);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    let url = cv.toDataURL('image/webp', 0.9), ext = 'webp';
+    if (!url.startsWith('data:image/webp')) { url = cv.toDataURL('image/png'); ext = 'png'; }
+    newCover = { b64: url.split(',')[1], ext };
+    previewSetCover(url);
+  };
+
+  $('saveSet').onclick = async () => {
+    const st = $('setStatus');
+    const name = $('setName').value.trim();
+    if (!name) return say(st, 'Set name is required.', 'err');
+    const id = editingSetId || slug($('setId').value.trim() || name);
+    if (!id) return say(st, 'Could not make an ID from that name.', 'err');
+    if (!editingSetId && sets.some((s) => s.id === id)) return say(st, `A set with ID "${id}" already exists. Pick it in the list above to edit it.`, 'err');
+    const old = sets.find((s) => s.id === id);
+    $('saveSet').disabled = true;
+    try {
+      say(st, 'Saving…');
+      let cover = $('setCover').value.trim();
+      if (newCover) { cover = `${SETS_DIR}${id}.${newCover.ext}`; await putFile(cover, newCover.b64, `Add cover for ${name}`); }
+      const path = (old && old.file) || `data/sets/${id}.json`;
+      if (!old && !(await gh('GET', path))) { // a new set gets an empty card file so the public pages can load it
+        await gh('PUT', path, { message: `Create set file: ${name}`, content: utf8ToB64(toJson({ cards: [] })) });
+      }
+      const idx = await readJson('data/index.json', { sets: [] });
+      idx.data.sets = idx.data.sets || [];
+      let entry = idx.data.sets.find((s) => s.id === id);
+      if (!entry) { entry = { id, name, file: path }; idx.data.sets.push(entry); }
+      entry.name = name;
+      const date = $('setDate').value.trim(), desc = $('setDesc').value.trim();
+      if (date) entry.date = date; else delete entry.date;
+      if (desc) entry.description = desc; else delete entry.description;
+      if (cover) entry.cover = cover; else delete entry.cover;
+      await gh('PUT', 'data/index.json', { message: `${old ? 'Update' : 'Add'} set: ${name}`, content: utf8ToB64(toJson(idx.data)), ...(idx.sha ? { sha: idx.sha } : {}) });
+      // tidy up: an uploaded cover that was replaced is no longer needed
+      if (old && old.cover && old.cover !== cover && old.cover.startsWith(SETS_DIR)) {
+        try { const f = await gh('GET', old.cover); if (f) await gh('DELETE', old.cover, { message: `Remove old cover for ${name}`, sha: f.sha }); } catch (_) {}
+      }
+      await loadAll(); renderSets(id); renderSetEditor(id); renderList();
+      say(st, `Saved set "${name}". The live site updates in about a minute.`, 'good');
+    } catch (e) { say(st, e.message, 'err'); }
+    $('saveSet').disabled = false;
+  };
+
+  $('deleteSet').onclick = async () => {
+    const st = $('setStatus');
+    const s = sets.find((x) => x.id === editingSetId); if (!s) return;
+    const n = cards.filter((c) => c._set === s.id).length;
+    if (n) return say(st, `"${s.name}" still has ${n} card${n === 1 ? '' : 's'}. Delete or move them first.`, 'err');
+    if (!confirm(`Delete the set "${s.name}"? This can't be undone from here.`)) return;
+    try {
+      say(st, 'Deleting…');
+      const file = s.file || setFile(s.id);
+      const sf = await readJson(file, { cards: [] });
+      if (normCards(sf.data).length) throw new Error('This set now has cards. Reload the page and delete them first.');
+      const idx = await readJson('data/index.json', { sets: [] });
+      idx.data.sets = (idx.data.sets || []).filter((x) => x.id !== s.id);
+      await gh('PUT', 'data/index.json', { message: `Delete set: ${s.name}`, content: utf8ToB64(toJson(idx.data)), sha: idx.sha });
+      for (const p of [file, s.cover && s.cover.startsWith(SETS_DIR) ? s.cover : null]) {
+        if (!p) continue;
+        try { const f = await gh('GET', p); if (f) await gh('DELETE', p, { message: `Delete ${p}`, sha: f.sha }); } catch (_) {}
+      }
+      await loadAll(); renderSets(); renderSetEditor(); renderList();
+      say(st, `Deleted set "${s.name}".`, 'good');
+    } catch (e) { say(st, e.message, 'err'); }
   };
 
   // ---------- paste-to-fill (uses the same parser as the Auto Fill extension) ----------

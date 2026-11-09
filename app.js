@@ -1,8 +1,8 @@
 // Public card browser. Reads cards.json (committed to the repo) and renders it.
 (function () {
   const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let cards = [];
+  const esc = RTS.esc;
+  let cards = [], sets = [];
 
   // Plate colours by card type (the widely used reference hex values for each frame type).
   const COLORS = {
@@ -47,29 +47,16 @@
   let fitTimer;
   window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitNames, 120); });
 
-  // data/index.json lists the sets; each set has its own JSON file in data/sets/
   async function load() {
-    const v = Date.now();
-    try {
-      const r = await fetch('data/index.json?v=' + v);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const idx = await r.json();
-      const failed = [];
-      const parts = await Promise.all((idx.sets || []).map(async (s) => {
-        try {
-          const rr = await fetch(s.file + '?v=' + v);
-          if (!rr.ok) throw new Error('HTTP ' + rr.status);
-          const d = await rr.json();
-          return (Array.isArray(d) ? d : d.cards || []).map((c) => ({ ...c, set: s.id, setName: s.name }));
-        } catch (e) { failed.push(s.name); return []; }
-      }));
-      cards = parts.flat();
-      if (failed.length) console.warn('Failed to load sets:', failed.join(', '));
-    } catch (e) {
-      $('count').textContent = 'Could not load data/index.json (' + e.message + ')';
-      return;
-    }
+    let data;
+    try { data = await RTS.loadData(); }
+    catch (e) { $('count').textContent = 'Could not load data/index.json (' + e.message + ')'; return; }
+    cards = data.cards; sets = data.sets;
+    if (data.failed.length) console.warn('Failed to load sets:', data.failed.join(', '));
     fillFilters();
+    // cards.html?set=<id> opens with that set already selected (this is where the Sets page links to)
+    const wanted = sets.find((s) => s.id === new URLSearchParams(location.search).get('set'));
+    if (wanted) $('fSet').value = wanted.name;
     render();
     openFromHash();
   }
@@ -77,7 +64,8 @@
   function fillFilters() {
     for (const [selId, key] of Object.entries(fields)) {
       const sel = $(selId);
-      const vals = [...new Set(cards.map((c) => c[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+      const src = selId === 'fSet' ? sets.map((s) => s.name) : cards.map((c) => c[key]);
+      const vals = [...new Set(src.filter(Boolean))].sort((a, b) => a.localeCompare(b));
       for (const v of vals) sel.insertAdjacentHTML('beforeend', `<option>${esc(v)}</option>`);
     }
   }
@@ -107,7 +95,23 @@
     return `<span class="badge ${cls}">${esc(st)}</span>`;
   }
 
+  function syncBanner() {
+    const el = $('setBanner');
+    const s = sets.find((x) => x.name === $('fSet').value);
+    if (!s) { el.hidden = true; el.innerHTML = ''; return; }
+    el.innerHTML = `${s.cover ? `<img class="sb-cover" src="${esc(s.cover)}" alt="${esc(s.name)}" onerror="this.remove()">` : ''}
+      <div class="sb-info">
+        <div class="sb-kicker">Set</div>
+        <h2>${esc(s.name)}</h2>
+        ${s.description ? `<p class="sb-desc">${esc(s.description)}</p>` : ''}
+        <p class="muted">${RTS.plural(s.count, 'card')}${s.date ? ' · ' + esc(s.date) : ''}</p>
+        <a href="sets.html">&larr; All sets</a>
+      </div>`;
+    el.hidden = false;
+  }
+
   function render() {
+    syncBanner();
     const list = filtered();
     $('count').textContent = `${list.length} of ${cards.length} cards`;
     $('grid').innerHTML = list.map((c) => {
@@ -152,12 +156,12 @@
         <p class="muted">${[c.setName && 'Set: ' + esc(c.setName), c.status && 'Status: ' + esc(c.status), c.creator && 'By ' + esc(c.creator)].filter(Boolean).join(' · ')}</p>
       </div></div>`;
     $('modal').hidden = false;
-    history.replaceState(null, '', '#' + encodeURIComponent(id));
+    history.replaceState(null, '', location.pathname + location.search + '#' + encodeURIComponent(id));
   }
 
   function hide() {
     $('modal').hidden = true;
-    history.replaceState(null, '', location.pathname);
+    history.replaceState(null, '', location.pathname + location.search);
   }
 
   function openFromHash() {

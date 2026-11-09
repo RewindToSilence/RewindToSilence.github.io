@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sets · Rewind To Silence</title>
+  <link rel="icon" href="logo.jpg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./"><img src="logo.jpg" alt="RTS"><h1>Rewind To Silence <span>Card Database</span></h1></a>
+    <nav><a href="cards.html">Cards</a><a href="sets.html" class="active">Sets</a></nav>
+  </header>
+
+  <main>
+    <h2 class="pagetitle">Sets</h2>
+    <section class="filters"><input id="setSearch" type="search" placeholder="Search sets…"></section>
+    <p id="setsCount" class="muted"></p>
+    <section id="setGrid" class="setgrid"></section>
+  </main>
+
+  <script src="common.js"></script>
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id), esc = RTS.esc;
+    let sets = [];
+
+    function render() {
+      const q = $('setSearch').value.trim().toLowerCase();
+      const list = sets.filter((s) => !q || s.name.toLowerCase().includes(q));
+      $('setsCount').textContent = list.length === sets.length ? RTS.plural(sets.length, 'set') : `${list.length} of ${sets.length} sets`;
+      $('setGrid').innerHTML = list.map((s) => `<a class="tile settile" href="cards.html?set=${encodeURIComponent(s.id)}">
+          <div class="cover">${s.cover ? `<img loading="lazy" src="${esc(s.cover)}" alt="${esc(s.name)}" onerror="this.replaceWith(document.createTextNode('No cover'))">` : 'No cover'}</div>
+          <div class="setlabel"><div class="setname">${esc(s.name)}</div><div class="setmeta">${RTS.plural(s.count, 'card')}${s.date ? ' · ' + esc(s.date) : ''}</div></div>
+        </a>`).join('') || '<p class="muted">No sets yet.</p>';
+    }
+
+    RTS.loadData().then((d) => {
+      // newest first: by date when a set has one, otherwise the most recently added
+      sets = d.sets.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || b.idx - a.idx);
+      render();
+    }).catch((e) => { $('setsCount').textContent = 'Could not load data/index.json (' + e.message + ')'; });
+
+    $('setSearch').addEventListener('input', render);
+  })();
+  </script>
+</body>
+</html>
