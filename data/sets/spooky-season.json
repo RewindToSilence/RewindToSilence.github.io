@@ -121,6 +121,20 @@
       "effect": "2 \"Terrorcarnation\" monsters\nThis co-linked card can attack directly. If this card is Special Summoned: You can set 1 “Terrorcarnation” Spell/Trap from your Deck or GY. During your opponent’s turn, if a card was destroyed by a card effect this turn and you control a “Terrorcarnation” Link Monster (Quick Effect): You can Special Summon this card from your GY. You can only use each effect of “Terrorcarnation Crow” once per turn, and you cannot Special Summon monsters from your Extra Deck the turn you activate either, except Zombie Link Monsters.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124779.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Cryptid",
+      "id": "terrorcarnation-cryptid",
+      "type": "Monster",
+      "subtype": "Link",
+      "attribute": "DARK",
+      "race": "Zombie",
+      "level": 3,
+      "atk": 0,
+      "arrows": "Top, Bottom-Left, Bottom-Right",
+      "effect": "2+ Zombie monsters\nThis card cannot be destroyed by battle or card effects while it points to a monster. If this card battles an opponent’s monster, this card gains ATK equal to the opposing monster’s original ATK. (Quick Effect): You can destroy all monsters this card points to, then you can destroy up to 2 face-up cards on the field. You can only use this effect of “Terrorcarnation Cryptid” once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124785.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
