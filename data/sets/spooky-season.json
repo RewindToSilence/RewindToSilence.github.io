@@ -71,6 +71,15 @@
       "effect": "If this card is Normal or Special Summoned: You can add 1 “Terrorcarnation” Spell/Trap from your Deck to your hand. If this card is destroyed by a card effect: You can Special Summon 1 “Terrorcarnation Token” (Zombie/DARK/Level 1/ATK 0/DEF 0) in Defense Position, then if you control a “Terrorcarnation” Link monster, you can send 1 “Terrorcarnation” card from your Deck to the GY, except “Terrorcarnation Punished”. You can only use each effect of “Terrorcarnation Punished” once per turn.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124759.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Chant",
+      "id": "terrorcarnation-chant",
+      "type": "Spell",
+      "subtype": "Continuous",
+      "effect": "When you activate this card: You can destroy 1 “Terrorcarnation” monster from your hand, field, or Deck. When a monster is destroyed by battle while you control a “Terrorcarnation” Link Monster: You can target that destroyed monster; Inflict damage to your opponent equal to that monster’s original ATK. You can only use each effect of \"Terrorcarnation Chant\" once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124763.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
