@@ -80,6 +80,15 @@
       "effect": "When you activate this card: You can destroy 1 “Terrorcarnation” monster from your hand, field, or Deck. When a monster is destroyed by battle while you control a “Terrorcarnation” Link Monster: You can target that destroyed monster; Inflict damage to your opponent equal to that monster’s original ATK. You can only use each effect of \"Terrorcarnation Chant\" once per turn.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124763.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Manifestation",
+      "id": "terrorcarnation-manifestation",
+      "type": "Spell",
+      "subtype": "Quick-Play",
+      "effect": "Destroy 1 “Terrorcarnation” Effect monster you control, and if you do, Special Summon 1 “Terrorcarnation” monster from your Deck with a different name. During your Main Phase: You can banish this card from your GY and target 1 “Terrorcarnation” monster in your GY: Add it to your hand, or if a monster was destroyed by a card effect this turn, Special Summon it instead. You can only use 1 effect of “Terrorcarnation Manifestation” once each turn, and only once that turn, also you cannot Special Summon monsters from your Extra Deck the turn you use either, except Zombie Link Monsters.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124766.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
