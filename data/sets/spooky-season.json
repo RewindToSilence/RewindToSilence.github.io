@@ -98,6 +98,15 @@
       "effect": "When you activate this card: You can Special Summon 1 “Terrorcarnation” monster from your hand or GY. When your opponent takes Battle Damage while you control a “Terrorcarnation” Link Monster: You can draw 1 card, also make all monsters your opponent controls lose ATK equal to the damage. You can only use each effect of \"Terrorcarnation Resurrection\" once per turn.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124773.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Sighting",
+      "id": "terrorcarnation-sighting",
+      "type": "Trap",
+      "subtype": "Continuous",
+      "effect": "When you activate this card: You can shuffle up to 3 “Terrorcarnation” monsters from your GY to the Deck. Once per turn, when a card or effect is activated while you control a “Terrorcarnation” Link Monster in the Extra Monster Zone: You can destroy 2 “Terrorcarnation” monsters you control, and if you do, negate that effect. You can only use each effect of \"Terrorcarnationg Sighting\" once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124775.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
