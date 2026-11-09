@@ -89,6 +89,15 @@
       "effect": "Destroy 1 “Terrorcarnation” Effect monster you control, and if you do, Special Summon 1 “Terrorcarnation” monster from your Deck with a different name. During your Main Phase: You can banish this card from your GY and target 1 “Terrorcarnation” monster in your GY: Add it to your hand, or if a monster was destroyed by a card effect this turn, Special Summon it instead. You can only use 1 effect of “Terrorcarnation Manifestation” once each turn, and only once that turn, also you cannot Special Summon monsters from your Extra Deck the turn you use either, except Zombie Link Monsters.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124766.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Resurrection",
+      "id": "terrorcarnation-resurrection",
+      "type": "Spell",
+      "subtype": "Quick-Play",
+      "effect": "When you activate this card: You can Special Summon 1 “Terrorcarnation” monster from your hand or GY. When your opponent takes Battle Damage while you control a “Terrorcarnation” Link Monster: You can draw 1 card, also make all monsters your opponent controls lose ATK equal to the damage. You can only use each effect of \"Terrorcarnation Resurrection\" once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124773.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
