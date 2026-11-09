@@ -107,6 +107,20 @@
       "effect": "When you activate this card: You can shuffle up to 3 “Terrorcarnation” monsters from your GY to the Deck. Once per turn, when a card or effect is activated while you control a “Terrorcarnation” Link Monster in the Extra Monster Zone: You can destroy 2 “Terrorcarnation” monsters you control, and if you do, negate that effect. You can only use each effect of \"Terrorcarnationg Sighting\" once per turn.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124775.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Crow",
+      "id": "terrorcarnation-crow",
+      "type": "Monster",
+      "subtype": "Link",
+      "attribute": "DARK",
+      "race": "Zombie",
+      "level": 2,
+      "atk": 1000,
+      "arrows": "Top, Top-Right",
+      "effect": "2 \"Terrorcarnation\" monsters\nThis co-linked card can attack directly. If this card is Special Summoned: You can set 1 “Terrorcarnation” Spell/Trap from your Deck or GY. During your opponent’s turn, if a card was destroyed by a card effect this turn and you control a “Terrorcarnation” Link Monster (Quick Effect): You can Special Summon this card from your GY. You can only use each effect of “Terrorcarnation Crow” once per turn, and you cannot Special Summon monsters from your Extra Deck the turn you activate either, except Zombie Link Monsters.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124779.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
