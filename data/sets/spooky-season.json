@@ -43,6 +43,20 @@
       "effect": "If this card is Normal or Special Summoned: You can destroy 1 “Terrorcarnation” monster from your hand, and if you do, draw 2 cards. If this card is destroyed by a card effect: You can Special Summon 1 “Terrorcarnation Token” (Zombie/DARK/Level 1/ATK 0/DEF 0) in Defense Position, then if you control a “Terrorcarnation” Link monster, you can destroy 1 “Terrorcarnation” monster from your Deck. You can only use each effect of “Terrorcarnation Maiden” once per turn.",
       "image": "https://images.duelingbook.com/custom-pics/6100000/6124752.jpg",
       "added": "2026-11-09"
+    },
+    {
+      "name": "Terrorcarnation Necromancer",
+      "id": "terrorcarnation-necromancer",
+      "type": "Monster",
+      "subtype": "Effect",
+      "attribute": "DARK",
+      "race": "Zombie",
+      "level": 3,
+      "atk": 0,
+      "def": 600,
+      "effect": "If this card is Normal or Special Summoned: You can add 1 \"Terrorcarnation\" monster from your Deck to your hand, except “Terrorcarnation Necromancer”. If this card is destroyed by a card effect: You can Special Summon 1 “Terrorcarnation Token” (Zombie/DARK/Level 1/ATK 0/DEF 0) in Defense Position, then if you control a “Terrorcarnation” Link monster, you can draw 1 card. You can only use each effect of “Terrorcarnation Necromancer” once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124755.jpg",
+      "added": "2026-11-09"
     }
   ]
 }
