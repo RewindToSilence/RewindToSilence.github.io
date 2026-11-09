@@ -9,6 +9,13 @@
       "id": "fullmetal-inferno",
       "name": "Fullmetal Inferno",
       "file": "data/sets/fullmetal-inferno.json"
+    },
+    {
+      "id": "spooky-season",
+      "name": "Spooky Season",
+      "file": "data/sets/spooky-season.json",
+      "date": "2026-11-05",
+      "cover": "images/sets/spooky-season.webp"
     }
   ]
 }
