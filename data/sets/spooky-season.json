@@ -1,3 +1,19 @@
 {
-  "cards": []
+  "cards": [
+    {
+      "name": "The Kind Reaperman",
+      "id": "the-kind-reaperman",
+      "type": "Monster",
+      "subtype": "Effect",
+      "attribute": "DARK",
+      "race": "Illusion",
+      "level": 12,
+      "atk": 0,
+      "def": 0,
+      "creator": "Dragoon",
+      "effect": "If this card battles a monster, neither can be destroyed by that battle. You can reveal this card in your hand; Banish 5 monsters in any GY, and if you do, Special Summon this card. (Quick Effect) .You can place 1 Finality Counter on each other monster on the field.(A monster with a Finality Counter is destroyed after activating an effect on the field and when it battles after Damage Calculation) If this card leaves the field: You can Special Summon any number of \"Lesser Death Tokens\" (Illusion/DARK/Level 1/ATK 2000/DEF 2000) to your Field, but they cannot be Tributed or used for a Fusion, Link or Synchro Summon. You can only use each effect of \"The Kind Reaperman\" once per turn.",
+      "image": "https://images.duelingbook.com/custom-pics/6100000/6124734.jpg",
+      "added": "2026-11-09"
+    }
+  ]
 }
